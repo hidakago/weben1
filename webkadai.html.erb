@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  </head>
+  <body>
+    <h1>課題</h1>
+
+    <!-- pgライブラリをこのhtmlファイル内で使用できるように -->
+    <% require 'pg' %>
+    <%# connection変数にgoyaデータベースとの接続情報を入れている %>
+    <% connection = PG::connect(dbname: "goya") %>
+    <% connection.internal_encoding = "UTF-8" %>
+
+    <!--譲渡先が自家消費でないゴーヤの情報を取得-->
+    <% result2 = connection.exec("select date, length, weight, quality from crops where give_for != '自家消費';") %>
+    <% date2 = [] %>
+    <!--each文で一つずつdateと言う名前の配列に挿入している -->
+    <% result2.each do |record| %>
+    <% ql = "適正"
+        if record["quality"] == "f"
+          ql = "不適"
+        end %>
+    <%  date2 << "ゴーヤの長さ：#{record["length"]}　ゴーヤの大きさ：#{record["weight"]}　品質：#{ql}" %>
+    <% end %>
+
+    <% result3 = connection.exec("select date, length, weight, give_for from crops where quality != 't';") %>
+    <% date3 = [] %>
+    <!--each文で一つずつdateと言う名前の配列に挿入している -->
+    <% result3.each do |record| %>
+      <%  date3 << "ゴーヤの長さ：#{record["length"]}　ゴーヤの大きさ：#{record["weight"]}　譲渡先：#{record["give_for"]}" %>
+    <% end %>
+
+    <form action="notjika.cgi" method="POST">
+       下記のボタンを押すと、譲渡先が自家消費ではないゴーヤの情報ページに飛びます<br><br>
+       <!-- valueには、送りたいデータを代入する -->
+       <!-- name="notjika"を、情報の目印とする -->
+      <input type="hidden" name="notjika" value="<%= date2.join('<br/>') %>">
+      <input type="submit" name="送信" >
+    </form>
+
+    <form action="qualityfalse.cgi" method="POST">
+       下記のボタンを押すと、品質が不適正なゴーヤの情報ページに飛びます<br><br>
+       <!-- valueには、送りたいデータを代入する -->
+       <!-- name="qualityfalse"を、情報の目印とする -->
+      <input type="hidden" name="qualityfalse" value="<%= date3.join('<br/>') %>">
+      <input type="submit" name="送信" >
+    </form>
+  </body>
+</html>
